@@ -35,7 +35,7 @@ export function Panel({
   return (
     <section
       className={cn(
-        "flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-surface p-3 panel-chrome",
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border/80 p-3 panel-chrome",
         className,
       )}
     >
@@ -59,29 +59,29 @@ export function RangeSlider({
 }) {
   const [local, setLocal] = useState(value);
   const [drag, setDrag] = useState(false);
+  
   useEffect(() => {
     if (!drag) setLocal(value);
   }, [value, drag]);
+
   return (
     <input
       type="range"
-      className="prop-slider"
+      className={cn("prop-slider", drag && "dragging")}
       min={0}
       max={100}
       value={local}
       disabled={disabled}
       onPointerDown={() => setDrag(true)}
-      onChange={(e) => setLocal(Number(e.target.value))}
-      onPointerUp={(e) => {
-        setDrag(false);
-        onChange(Number((e.target as HTMLInputElement).value));
+      onChange={(e) => {
+        const val = Number(e.target.value);
+        setLocal(val);
+        onChange(val);
       }}
-      onBlur={(e) => {
-        setDrag(false);
-        onChange(Number((e.target as HTMLInputElement).value));
-      }}
+      onPointerUp={() => setDrag(false)}
+      onBlur={() => setDrag(false)}
       style={{
-        background: `linear-gradient(to right, var(--color-slider-fill) ${local}%, var(--color-slider-track) ${local}%)`,
+        background: `linear-gradient(to right, ${disabled ? 'var(--color-border-strong)' : 'var(--color-slider-fill)'} ${local}%, var(--color-slider-track) ${local}%)`,
       }}
     />
   );
@@ -141,7 +141,7 @@ export function PropertiesPanel({
     <Panel title={active ? TITLES[active] ?? "Объект" : "Свойства объекта"} className="area-props">
       <div className="panel-scroll min-h-0 flex-1 pr-1">
         {!active && (
-          <div className="flex h-full items-center justify-center rounded-md border border-dashed border-border px-4 py-8 text-center text-[13px] text-subtle">
+          <div className="flex h-full items-center justify-center rounded-md border border-dashed border-border/60 px-4 py-8 text-center text-[13px] text-subtle">
             Выберите аппарат на мнемосхеме
           </div>
         )}
@@ -151,7 +151,7 @@ export function PropertiesPanel({
         {active === "e1" && (
           <div className="flex flex-col gap-2">
             {state.voltage_E1 === 0 && (
-              <div className="rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg">
+              <div className="rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg shadow-sm">
                 Напряжение отключено. Слейте воду.
               </div>
             )}
@@ -199,7 +199,7 @@ export function PropertiesPanel({
         {active === "pcv" && (
           <div>
             {state.pcv_stuck && (
-              <div className="mb-2 rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg">
+              <div className="mb-2 rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg shadow-sm">
                 Клапан заклинил
               </div>
             )}
@@ -212,7 +212,7 @@ export function PropertiesPanel({
         {active === "avz" && (
           <div>
             {state.avz_broken && (
-              <div className="mb-2 rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg">
+              <div className="mb-2 rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg shadow-sm">
                 Отказ двигателя
               </div>
             )}
@@ -225,13 +225,13 @@ export function PropertiesPanel({
         {active === "trc3" && (
           <div className="flex flex-col gap-2">
             {state.gas_stuck && (
-              <div className="rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg">
+              <div className="rounded-md bg-danger px-3 py-2 text-center text-[12px] font-bold text-fg shadow-sm">
                 Клапан заклинил на 100%
               </div>
             )}
             <PropCard>
               <PropHead label="Режим" value={state.TRC3_mode === "AUTO" ? "АВТО" : "РУЧНОЙ"} ok={state.TRC3_mode === "AUTO"} />
-              <div className="flex overflow-hidden rounded-md border border-border">
+              <div className="flex overflow-hidden rounded-md border border-border/80">
                 <ModeBtn active={state.TRC3_mode === "AUTO"} tone="ok" onClick={() => cmd("set_trc3_mode", 1)}>
                   АВТО
                 </ModeBtn>
@@ -262,7 +262,7 @@ function PumpBlock({ on, onStart, onStop }: { on: boolean; onStart: () => void; 
   return (
     <PropCard>
       <PropHead label="Состояние" value={on ? "РАБОТА" : "СТОП"} ok={on} />
-      <div className="flex overflow-hidden rounded-md border border-border">
+      <div className="flex overflow-hidden rounded-md border border-border/80">
         <ModeBtn active={on} tone="ok" onClick={onStart}>
           ПУСК
         </ModeBtn>
@@ -276,7 +276,7 @@ function PumpBlock({ on, onStart, onStop }: { on: boolean; onStart: () => void; 
 
 function PropCard({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-2 flex flex-col gap-2 rounded-md border border-border bg-bg/60 p-3">{children}</div>
+    <div className="mb-2 flex flex-col gap-2 rounded-md border border-border/60 bg-bg/40 p-3">{children}</div>
   );
 }
 
@@ -292,9 +292,9 @@ function PropHead({ label, value, ok }: { label: string; value: string; ok?: boo
 }
 
 function vibTone(on: boolean, vib: number) {
-  if (!on || vib > 7) return "bg-danger";
-  if (vib > 4) return "bg-warn";
-  return "bg-ok";
+  if (!on || vib > 7) return "bg-danger shadow-[0_0_8px_rgba(224,90,90,0.6)]";
+  if (vib > 4) return "bg-warn shadow-[0_0_8px_rgba(201,162,39,0.6)]";
+  return "bg-ok shadow-[0_0_8px_rgba(61,186,139,0.4)]";
 }
 
 export function DiagPanel({ state }: { state: PlantState }) {
@@ -309,7 +309,7 @@ export function DiagPanel({ state }: { state: PlantState }) {
         {rows.map((r) => (
           <div
             key={r.name}
-            className="flex items-center justify-between rounded-md border border-border bg-bg/50 px-3 py-2.5 text-[12px]"
+            className="flex items-center justify-between rounded-md border border-border/60 bg-bg/40 px-3 py-2.5 text-[12px]"
           >
             <span className="flex items-center gap-2">
               <span className={cn("inline-block size-2 rounded-full", vibTone(r.on, r.vib))} />
@@ -333,7 +333,7 @@ export function InstructorPanel({
   onReset: () => void;
 }) {
   return (
-    <Panel title="Сценарии инструктора" className="area-instructor bg-instructor">
+    <Panel title="Сценарии инструктора" className="area-instructor">
       <div className="panel-scroll grid min-h-0 flex-1 grid-cols-2 content-start gap-2 pr-1">
         {SCENARIOS.map((s) => (
           <button
@@ -341,10 +341,10 @@ export function InstructorPanel({
             type="button"
             onClick={() => onScenario(s.id)}
             className={cn(
-              "rounded-md border px-2 py-2 text-[11px] font-semibold leading-tight",
+              "rounded-md border px-2 py-2 text-[11px] font-semibold leading-tight transition-colors",
               s.tone === "danger"
-                ? "border-danger/50 bg-danger/10 text-danger hover:bg-danger/20"
-                : "border-warn/50 bg-warn/10 text-warn hover:bg-warn/20",
+                ? "border-danger/40 bg-danger/10 text-danger hover:bg-danger/20"
+                : "border-warn/40 bg-warn/10 text-warn hover:bg-warn/20",
             )}
           >
             {s.title}
@@ -354,7 +354,7 @@ export function InstructorPanel({
       <button
         type="button"
         onClick={onReset}
-        className="mt-2 flex items-center justify-center gap-2 rounded-md border border-ok/40 bg-ok/10 px-3 py-2 text-[12px] font-semibold text-ok hover:bg-ok/20"
+        className="mt-2 flex items-center justify-center gap-2 rounded-md border border-ok/40 bg-ok/10 px-3 py-2 text-[12px] font-semibold text-ok hover:bg-ok/20 transition-colors"
       >
         <RotateCcw className="size-3.5" />
         Сбросить установку
@@ -376,7 +376,7 @@ export function AlarmsPanel({
       className="area-alarms"
       extra={
         alarms.some((a) => !a.ack) ? (
-          <span className="rounded-sm bg-danger/20 px-1.5 py-0.5 font-mono text-[10px] text-danger">
+          <span className="rounded-sm bg-danger/20 px-1.5 py-0.5 font-mono text-[10px] text-danger shadow-sm">
             {alarms.filter((a) => !a.ack).length}
           </span>
         ) : null
@@ -392,11 +392,11 @@ export function AlarmsPanel({
                 type="button"
                 onClick={() => onAck(a.id)}
                 className={cn(
-                  "mb-1.5 w-full rounded-r-md border-l-4 border-danger px-3 py-2 text-left text-[12px] text-danger/90",
-                  a.ack ? "bg-danger/5" : "unacked",
+                  "mb-1.5 w-full rounded-r-md border-l-4 border-danger/80 px-3 py-2 text-left text-[12px] text-danger/90 transition-colors",
+                  a.ack ? "bg-danger/5 hover:bg-danger/10" : "unacked",
                 )}
               >
-                <div className="mb-1 font-mono text-[10px] text-muted">{a.time}</div>
+                <div className="mb-1 font-mono text-[10px] text-muted/80">{a.time}</div>
                 {a.text}
               </button>
             </li>
@@ -450,7 +450,7 @@ export function AiPanel({
         </div>
         <div
           className={cn(
-            "mb-2 rounded-md border px-3 py-2 text-[12px] leading-relaxed",
+            "mb-2 rounded-md border px-3 py-2 text-[12px] leading-relaxed shadow-sm",
             coach.severity === "danger" && "border-danger/40 bg-danger/10 text-danger",
             coach.severity === "warn" && "border-warn/40 bg-warn/10 text-warn",
             coach.severity === "info" && "border-accent/25 bg-accent/10 text-accent",
@@ -481,8 +481,8 @@ export function AiPanel({
             <div
               key={i}
               className={cn(
-                "rounded-md px-2.5 py-1.5 text-[12px] leading-relaxed",
-                m.role === "user" ? "bg-surface-2 text-fg" : "bg-accent/10 text-accent",
+                "rounded-md px-2.5 py-1.5 text-[12px] leading-relaxed shadow-sm",
+                m.role === "user" ? "bg-bg/60 text-fg" : "bg-accent/10 border border-accent/20 text-accent",
               )}
             >
               {m.text}
@@ -501,12 +501,12 @@ export function AiPanel({
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Спросить инструктора…"
-          className="min-w-0 flex-1 rounded-md border border-border bg-bg px-2 py-2 text-[12px] text-fg outline-none placeholder:text-subtle focus:border-accent"
+          className="min-w-0 flex-1 rounded-md border border-border/80 bg-bg/50 px-2 py-2 text-[12px] text-fg outline-none placeholder:text-subtle focus:border-accent transition-colors"
         />
         <button
           type="submit"
           disabled={asking || !question.trim()}
-          className="rounded-md border border-accent/40 bg-accent/15 px-2.5 text-accent disabled:opacity-40"
+          className="rounded-md border border-accent/40 bg-accent/15 px-2.5 text-accent disabled:opacity-40 transition-colors hover:bg-accent/25"
           aria-label="Отправить"
         >
           {asking ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
@@ -516,7 +516,7 @@ export function AiPanel({
         type="button"
         onClick={onDebrief}
         disabled={debriefing}
-        className="mt-2 flex items-center justify-center gap-2 rounded-md border border-border bg-surface-2 px-3 py-2 text-[12px] font-semibold text-fg hover:border-accent/40 disabled:opacity-50"
+        className="mt-2 flex items-center justify-center gap-2 rounded-md border border-border/80 bg-bg/40 px-3 py-2 text-[12px] font-semibold text-fg hover:border-accent/40 hover:text-accent disabled:opacity-50 transition-colors"
       >
         {debriefing ? <Loader2 className="size-3.5 animate-spin" /> : <FileText className="size-3.5" />}
         Сформировать отчёт
@@ -529,12 +529,12 @@ function LevelChip({ ok, warn, label }: { ok?: boolean; warn?: boolean; label: s
   return (
     <span
       className={cn(
-        "rounded-sm border px-1.5 py-0.5 text-[10px] font-medium",
+        "rounded-sm border px-1.5 py-0.5 text-[10px] font-medium shadow-sm",
         warn
-          ? "border-warn/40 text-warn"
+          ? "border-warn/40 bg-warn/10 text-warn"
           : ok
-            ? "border-ok/40 text-ok"
-            : "border-border text-subtle",
+            ? "border-ok/40 bg-ok/10 text-ok"
+            : "border-border/60 bg-surface/50 text-subtle",
       )}
     >
       {label}
@@ -554,7 +554,7 @@ export function HeaderBar({
   onPaz: () => void;
 }) {
   return (
-    <header className="area-header flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4">
+    <header className="area-header flex items-center justify-between gap-3 rounded-lg border border-border/80 bg-surface/65 backdrop-blur-md px-4 shadow-sm">
       <div className="flex min-w-0 items-center gap-3">
         <Activity className="size-5 shrink-0 text-accent" />
         <div className="min-w-0">
@@ -568,7 +568,7 @@ export function HeaderBar({
         <button
           type="button"
           onClick={onPaz}
-          className="flex items-center gap-1.5 rounded-md border border-danger bg-danger/15 px-2.5 py-1.5 text-[11px] font-bold text-danger hover:bg-danger/25"
+          className="flex items-center gap-1.5 rounded-md border border-danger/60 bg-danger/15 px-2.5 py-1.5 text-[11px] font-bold text-danger hover:bg-danger/25 transition-colors"
         >
           <ShieldAlert className="size-3.5" />
           ПАЗ
@@ -580,7 +580,7 @@ export function HeaderBar({
         <span className="hidden font-mono text-[12px] text-fg md:inline">{clock}</span>
         <span
           className={cn(
-            "rounded-md border px-2.5 py-1 font-mono text-[12px] font-bold",
+            "rounded-md border px-2.5 py-1 font-mono text-[12px] font-bold shadow-sm",
             score >= 75
               ? "border-ok/40 bg-ok/10 text-ok"
               : score >= 40
@@ -606,71 +606,64 @@ export function DebriefDialog({
 }) {
   const next = report.nextScenarioId ? getScenario(report.nextScenarioId) : null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/85 p-4">
-      <div className="panel-scroll max-h-[90dvh] w-full max-w-lg rounded-xl border border-border bg-surface p-5 panel-chrome">
-        <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/60 backdrop-blur-sm p-4">
+      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-xl border border-border/60 bg-surface/75 backdrop-blur-xl p-6 shadow-2xl">
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-border/50 pb-4">
           <div>
             <div className="text-[11px] font-bold tracking-[0.14em] text-muted uppercase">
               Отчёт ИИ-модуля {report.source === "ai" ? "· Grok" : "· правила"}
             </div>
-            <h3 className="mt-1 text-lg font-semibold">
-              {report.verdict === "сдал" ? "Зачёт" : report.verdict === "условно" ? "Условно" : "Не зачёт"}
+            <h3 className={cn(
+              "mt-2 text-2xl font-bold tracking-tight",
+              report.verdict === "сдал" ? "text-ok" : report.verdict === "условно" ? "text-warn" : "text-danger"
+            )}>
+              {report.verdict === "сдал" ? "ЗАЧЁТ" : report.verdict === "условно" ? "УСЛОВНО" : "НЕ ЗАЧЁТ"}
             </h3>
           </div>
-          <span
-            className={cn(
-              "rounded-md border px-2 py-1 text-[12px] font-bold",
-              report.verdict === "сдал" && "border-ok/40 text-ok",
-              report.verdict === "условно" && "border-warn/40 text-warn",
-              report.verdict === "не сдал" && "border-danger/40 text-danger",
-            )}
-          >
-            {report.verdict}
-          </span>
         </div>
-        <p className="mb-3 text-[13px] leading-relaxed text-fg">{report.summary}</p>
-        <div className="mb-3 grid gap-2 text-[12px]">
-          <div className="rounded-md border border-border bg-bg/40 p-3">
+        <p className="mb-4 text-[13px] leading-relaxed text-fg/90">{report.summary}</p>
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 text-[12px]">
+          <div className="rounded-lg border border-border/60 bg-bg/30 p-3.5 backdrop-blur-sm">
             <div className="mb-1 text-[10px] font-bold tracking-wider text-muted uppercase">Время реакции</div>
-            {report.reaction}
+            <div className="font-medium text-fg">{report.reaction}</div>
           </div>
-          <div className="rounded-md border border-border bg-bg/40 p-3">
+          <div className="rounded-lg border border-border/60 bg-bg/30 p-3.5 backdrop-blur-sm">
             <div className="mb-1 text-[10px] font-bold tracking-wider text-muted uppercase">Последовательность</div>
-            {report.sequence}
+            <div className="font-medium text-fg">{report.sequence}</div>
           </div>
         </div>
         {report.errors.length > 0 && (
-          <div className="mb-3">
-            <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-danger uppercase">
+          <div className="mb-4">
+            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-danger uppercase">
               <AlertTriangle className="size-3.5" />
               Ошибки оператора
             </div>
-            <ul className="space-y-1.5">
+            <ul className="space-y-2">
               {report.errors.map((e, i) => (
-                <li key={i} className="rounded-md border border-danger/25 bg-danger/10 px-3 py-2 text-[12px]">
-                  <div>{e.text}</div>
-                  {e.rule && <div className="mt-1 text-[10px] text-muted">{e.rule}</div>}
+                <li key={i} className="rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-2.5 text-[12px] shadow-sm">
+                  <div className="text-danger/90 font-medium">{e.text}</div>
+                  {e.rule && <div className="mt-1.5 text-[10.5px] text-danger/60 leading-tight">{e.rule}</div>}
                 </li>
               ))}
             </ul>
           </div>
         )}
         {report.recommendations.length > 0 && (
-          <div className="mb-4">
-            <div className="mb-1.5 text-[11px] font-bold tracking-wider text-muted uppercase">Рекомендации</div>
-            <ul className="list-disc space-y-1 pl-4 text-[12px] text-fg">
+          <div className="mb-5">
+            <div className="mb-2 text-[11px] font-bold tracking-wider text-muted uppercase">Рекомендации</div>
+            <ul className="pl-4 list-disc space-y-1.5 text-[12.5px] text-fg/80 marker:text-muted">
               {report.recommendations.map((r, i) => (
                 <li key={i}>{r}</li>
               ))}
             </ul>
           </div>
         )}
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2.5 sm:flex-row mt-2">
           {next && (
             <button
               type="button"
               onClick={() => onNext(report.nextScenarioId)}
-              className="flex-1 rounded-md border border-accent/40 bg-accent/15 px-3 py-2.5 text-[12px] font-semibold text-accent"
+              className="flex-1 rounded-lg border border-accent/40 bg-accent/15 px-4 py-3 text-[13px] font-semibold text-accent hover:bg-accent/25 transition-colors shadow-sm"
             >
               Далее: {next.title}
             </button>
@@ -678,13 +671,13 @@ export function DebriefDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-md border border-border px-3 py-2.5 text-[12px] font-semibold text-fg"
+            className="flex-1 rounded-lg border border-border/80 bg-bg/50 px-4 py-3 text-[13px] font-semibold text-fg hover:border-border hover:bg-bg/80 transition-colors shadow-sm"
           >
             Закрыть
           </button>
         </div>
         {report.nextScenarioReason && (
-          <p className="mt-2 text-[11px] leading-relaxed text-muted">{report.nextScenarioReason}</p>
+          <p className="mt-3 text-center text-[11px] leading-relaxed text-muted/80">{report.nextScenarioReason}</p>
         )}
       </div>
     </div>

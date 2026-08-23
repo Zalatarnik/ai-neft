@@ -19,8 +19,8 @@
   --color-flare: #d46a7a;
   --color-instructor: #0c1824;
   --color-slider-track: #121820;
-  --color-slider-fill: #3d5a6a;
-  --color-slider-thumb: #2a3344;
+  --color-slider-fill: var(--color-accent);
+  --color-slider-thumb: var(--color-accent);
   --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --radius-xs: 4px;
@@ -39,7 +39,7 @@
     color-scheme: dark;
     height: 100%;
     scrollbar-width: thin;
-    scrollbar-color: #3a4558 #0a0c12;
+    scrollbar-color: #3a4558 transparent;
   }
 
   html,
@@ -59,31 +59,30 @@
   * {
     box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: #3a4558 #0a0c12;
+    scrollbar-color: #3a4558 transparent;
   }
 
   *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   *::-webkit-scrollbar-track {
-    background: #0a0c12;
+    background: transparent;
     border-radius: 4px;
   }
 
   *::-webkit-scrollbar-thumb {
-    background: #3a4558;
+    background: #252d3c;
     border-radius: 4px;
-    border: 1px solid #0a0c12;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: #4a5568;
+    background: #3a4558;
   }
 
   *::-webkit-scrollbar-corner {
-    background: #0a0c12;
+    background: transparent;
   }
 }
 
@@ -94,16 +93,6 @@
   .led-live {
     animation: none !important;
   }
-}
-
-.scada-grid {
-  background-color: #080c14;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
 }
 
 .pipe-bg {
@@ -122,14 +111,17 @@
   animation: flow-anim 1.5s linear infinite;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--color-process));
 }
 
 .pipe-flow.gas {
   stroke: var(--color-gas);
+  filter: drop-shadow(0 0 4px var(--color-gas));
 }
 
 .pipe-flow.flare {
   stroke: var(--color-flare);
+  filter: drop-shadow(0 0 4px var(--color-flare));
 }
 
 @keyframes flow-anim {
@@ -142,7 +134,9 @@
   position: absolute;
   transform: translate(-50%, -50%);
   width: 200px;
-  background: linear-gradient(180deg, #161c28 0%, #10141c 100%);
+  background: linear-gradient(180deg, rgba(22, 28, 40, 0.85) 0%, rgba(16, 20, 28, 0.85) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   z-index: 2;
@@ -161,6 +155,15 @@
   border-color: var(--color-accent);
 }
 
+.eq-node.active {
+  border-color: var(--color-accent);
+  transform: translate(-50%, -52%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 24px rgba(0, 0, 0, 0.55),
+    0 0 28px color-mix(in oklab, var(--color-accent) 35%, transparent);
+}
+
 .eq-node.alarm {
   border-color: var(--color-danger);
   animation: alarm-pulse 1.6s ease-in-out infinite;
@@ -172,7 +175,7 @@
     box-shadow: 0 0 0 0 rgba(224, 90, 90, 0.15);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(224, 90, 90, 0.12);
+    box-shadow: 0 0 0 6px rgba(224, 90, 90, 0.25);
   }
 }
 
@@ -190,7 +193,9 @@
 .term-node {
   position: absolute;
   transform: translate(-50%, -50%);
-  background: var(--color-surface-2);
+  background: rgba(22, 28, 40, 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border: 1px dashed var(--color-border-strong);
   padding: 8px 12px;
   border-radius: 4px;
@@ -212,6 +217,7 @@
   background: var(--color-slider-track);
 }
 
+/* Мягкая и плавная стилизация ползунка для WebKit */
 .prop-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -219,21 +225,34 @@
   height: 16px;
   border-radius: 50%;
   background: var(--color-slider-thumb);
-  border: 2px solid var(--color-border-strong);
-  box-shadow: 0 0 0 1px #0a0c12;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   cursor: pointer;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .prop-slider::-webkit-slider-thumb:hover {
-  border-color: var(--color-slider-fill);
+  transform: scale(1.1);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 50%, transparent);
+}
+
+.prop-slider:active::-webkit-slider-thumb,
+.prop-slider.dragging::-webkit-slider-thumb {
+  transform: scale(1.2);
+  /* Сочетание насыщенного центрального ореола и мягкого широкого свечения */
+  box-shadow: 0 0 16px 2px color-mix(in oklab, var(--color-accent) 65%, transparent),
+              0 0 4px 1px var(--color-accent);
 }
 
 .prop-slider:disabled::-webkit-slider-thumb {
   background: #1a2030;
   border-color: #2a3344;
+  box-shadow: none;
   cursor: not-allowed;
+  transform: none;
 }
 
+/* Мягкая и плавная стилизация ползунка для Firefox */
 .prop-slider::-moz-range-track {
   height: 6px;
   border-radius: 3px;
@@ -246,14 +265,30 @@
   height: 16px;
   border-radius: 50%;
   background: var(--color-slider-thumb);
-  border: 2px solid var(--color-border-strong);
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   cursor: pointer;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.prop-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 50%, transparent);
+}
+
+.prop-slider:active::-moz-range-thumb,
+.prop-slider.dragging::-moz-range-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 0 16px 2px color-mix(in oklab, var(--color-accent) 65%, transparent),
+              0 0 4px 1px var(--color-accent);
 }
 
 .prop-slider:disabled::-moz-range-thumb {
   background: #1a2030;
   border-color: #2a3344;
+  box-shadow: none;
   cursor: not-allowed;
+  transform: none;
 }
 
 .dashboard-shell {
@@ -292,8 +327,6 @@
 }
 .area-instructor {
   grid-area: instructor;
-  background: var(--color-instructor);
-  border-color: color-mix(in oklab, var(--color-accent) 28%, var(--color-border));
 }
 .area-alarms {
   grid-area: alarms;
@@ -347,6 +380,9 @@
 }
 
 .panel-chrome {
+  background: rgba(16, 20, 28, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 8px 24px rgba(0, 0, 0, 0.35);

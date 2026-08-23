@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type TouchEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import { ScadaScheme } from "./ScadaScheme";
 import {
   AiPanel,
@@ -23,6 +23,12 @@ export function Dashboard() {
   const scadaRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.72);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  
+  const stateRef = useRef({ zoom, pan });
+  useEffect(() => {
+    stateRef.current = { zoom, pan };
+  }, [zoom, pan]);
+
   const [dragging, setDragging] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
   const [activePanel, setActivePanel] = useState<string | null>(null);
@@ -35,6 +41,28 @@ export function Dashboard() {
   const [asking, setAsking] = useState(false);
   const [debriefing, setDebriefing] = useState(false);
   const [report, setReport] = useState<DebriefReport | null>(null);
+
+  const clampPan = useCallback((x: number, y: number, z: number) => {
+    const el = scadaRef.current;
+    if (!el) return { x, y };
+    const mapW = 2200 * z;
+    const mapH = 1200 * z;
+    
+    const bX1 = el.clientWidth * 0.2 - mapW;
+    const bX2 = el.clientWidth * 0.8;
+    const bY1 = el.clientHeight * 0.2 - mapH;
+    const bY2 = el.clientHeight * 0.8;
+
+    const minX = Math.min(bX1, bX2);
+    const maxX = Math.max(bX1, bX2);
+    const minY = Math.min(bY1, bY2);
+    const maxY = Math.max(bY1, bY2);
+
+    return {
+      x: Math.max(minX, Math.min(maxX, x)),
+      y: Math.max(minY, Math.min(maxY, y)),
+    };
+  }, []);
 
   useEffect(() => {
     const el = scadaRef.current;
@@ -51,25 +79,46 @@ export function Dashboard() {
         ? 0.52
         : Math.round(Math.max(0.42, Math.min(1.05, fit * 1.02)) * 100) / 100;
       setZoom(z);
-      setPan({
-        x: el.clientWidth / 2 - (mobile ? 1000 : 1100) * z,
-        y: el.clientHeight / 2 - (mobile ? 720 : 680) * z,
-      });
+      setPan(clampPan(
+        el.clientWidth / 2 - (mobile ? 1000 : 1100) * z,
+        el.clientHeight / 2 - (mobile ? 720 : 680) * z,
+        z
+      ));
     };
     layout();
+    
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      if (!scadaRef.current) return;
+      
+      const { zoom: prevZoom, pan: prevPan } = stateRef.current;
       const delta = -e.deltaY * 0.0015;
-      setZoom((prev) => Math.round(Math.min(Math.max(0.35, prev + delta), 2.2) * 100) / 100);
+      const newZ = Math.round(Math.min(Math.max(0.35, prevZoom + delta), 2.2) * 100) / 100;
+      if (newZ === prevZoom) return;
+
+      const rect = scadaRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const unscaledX = (mouseX - prevPan.x) / prevZoom;
+      const unscaledY = (mouseY - prevPan.y) / prevZoom;
+
+      const newPanX = mouseX - unscaledX * newZ;
+      const newPanY = mouseY - unscaledY * newZ;
+
+      setZoom(newZ);
+      setPan(clampPan(newPanX, newPanY, newZ));
     };
+    
     el.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("resize", layout);
+    
     return () => {
       el.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", layout);
       mq.removeEventListener("change", applyMq);
     };
-  }, []);
+  }, [sim.state.exploded, clampPan]);
 
   const beginPan = (x: number, y: number) => {
     setDragging(true);
@@ -83,7 +132,7 @@ export function Dashboard() {
   };
   const onMapMove = (e: MouseEvent) => {
     if (!dragging) return;
-    setPan({ x: e.clientX - startPos.current.x, y: e.clientY - startPos.current.y });
+    setPan(clampPan(e.clientX - startPos.current.x, e.clientY - startPos.current.y, zoom));
   };
   const onTouchStart = (e: TouchEvent) => {
     const t = e.target as HTMLElement;
@@ -94,7 +143,7 @@ export function Dashboard() {
   const onTouchMove = (e: TouchEvent) => {
     if (!dragging) return;
     const p = e.touches[0];
-    if (p) setPan({ x: p.clientX - startPos.current.x, y: p.clientY - startPos.current.y });
+    if (p) setPan(clampPan(p.clientX - startPos.current.x, p.clientY - startPos.current.y, zoom));
   };
 
   const snapshot = () => {
@@ -229,9 +278,20 @@ export function Dashboard() {
       <div
         ref={scadaRef}
         className={cn(
-          "area-scada relative overflow-hidden rounded-lg border border-border",
+          "area-scada relative overflow-hidden rounded-lg border border-border/50",
           dragging ? "cursor-grabbing" : "cursor-grab",
         )}
+        style={{
+          backgroundColor: '#080c14',
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px)
+          `,
+          backgroundSize: `${100 * zoom}px ${100 * zoom}px, ${100 * zoom}px ${100 * zoom}px, ${20 * zoom}px ${20 * zoom}px, ${20 * zoom}px ${20 * zoom}px`,
+          backgroundPosition: `${pan.x}px ${pan.y}px, ${pan.x}px ${pan.y}px, ${pan.x}px ${pan.y}px, ${pan.x}px ${pan.y}px`,
+        }}
         onMouseDown={onMapDown}
         onMouseMove={onMapMove}
         onMouseUp={() => setDragging(false)}
@@ -240,8 +300,8 @@ export function Dashboard() {
         onTouchMove={onTouchMove}
         onTouchEnd={() => setDragging(false)}
       >
-        <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-sm border border-border bg-surface px-2 py-1 text-[10px] font-bold tracking-wider text-muted uppercase">
-          Мнемосхема АСУ ТП · колесо — масштаб
+        <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-md border border-border/50 bg-surface/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold tracking-wider text-muted uppercase shadow-sm">
+          Мнемосхема АСУ ТП
         </div>
         <ScadaScheme
           state={sim.state}
@@ -290,8 +350,8 @@ export function Dashboard() {
                 type="button"
                 onClick={() => setTab(id)}
                 className={cn(
-                  "rounded-md border px-2 py-2 text-[11px] font-semibold",
-                  tab === id ? "border-accent text-accent" : "border-border text-muted",
+                  "rounded-md border px-2 py-2 text-[11px] font-semibold backdrop-blur-sm",
+                  tab === id ? "border-accent text-accent bg-accent/10" : "border-border/60 text-muted bg-surface/60",
                 )}
               >
                 {label}

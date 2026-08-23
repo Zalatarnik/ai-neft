@@ -74,14 +74,20 @@ export function ScadaScheme({
         {state.pump_H1 && state.valve_feed > 0 && (
           <path d="M 650 700 L 860 700 Q 880 700 880 680 L 880 620 Q 880 600 900 600" className="pipe-flow" />
         )}
-        <path d="M 1000 510 L 1000 120" className="pipe-bg" />
-        {state.pcv_221 > 0 && <path d="M 1000 510 L 1000 120" className="pipe-flow flare" />}
+        
+        {/* Жёлтая линия газа (Отрисовывается первой, чтобы уйти под факельную) */}
         <path d="M 1000 420 Q 1000 400 1020 400 L 1200 400" className="pipe-bg" />
         {!state.avz_broken && (
           <path d="M 1000 420 Q 1000 400 1020 400 L 1200 400" className="pipe-flow gas" />
         )}
         <path d="M 1400 400 L 1550 400" className="pipe-bg" />
         {!state.avz_broken && <path d="M 1400 400 L 1550 400" className="pipe-flow gas" />}
+
+        {/* Красная факельная линия (Отрисовывается поверх) */}
+        <path d="M 1000 510 L 1000 120" className="pipe-bg" />
+        {state.pcv_221 > 0 && <path d="M 1000 510 L 1000 120" className="pipe-flow flare" />}
+        
+        {/* Остальные трубы */}
         <path d="M 1000 690 L 1000 860" className="pipe-bg" />
         {state.pump_H3 && <path d="M 1000 690 L 1000 860" className="pipe-flow" />}
         <path d="M 1100 900 L 1300 900" className="pipe-bg" />
@@ -146,8 +152,8 @@ export function ScadaScheme({
         <Row name="Деэмульгатор" value={`${state.demulsifier_feed.toFixed(1)} кг/ч`} cls={state.demulsifier_feed < 10 ? "text-danger" : "text-ok"} />
       </Eq>
 
-      <button type="button" className="valve-wrap" style={{ left: 750, top: 700 }} onClick={() => onEquipmentClick("fcv")}>
-        <span className="mb-1 rounded-sm border border-border bg-surface px-2 py-0.5 text-[10px] font-bold text-fg">
+      <button type="button" className={cn("valve-wrap", activePanel === "fcv" && "active")} style={{ left: 750, top: 700 }} onClick={() => onEquipmentClick("fcv")}>
+        <span className={cn("mb-1 rounded-sm border px-2 py-0.5 text-[10px] font-bold transition-all", activePanel === "fcv" ? "border-accent bg-accent/20 text-accent shadow-[0_0_16px_rgba(94,200,232,0.35)]" : "border-border bg-surface text-fg")}>
           FCV-1
         </span>
         <ValveIcon active={state.valve_feed > 0} />
@@ -174,8 +180,8 @@ export function ScadaScheme({
         <Bar pct={state.level_K1} danger={state.level_K1 > 90 || state.level_K1 < 10} />
       </Eq>
 
-      <button type="button" className="valve-wrap" style={{ left: 1000, top: 250 }} onClick={() => onEquipmentClick("pcv")}>
-        <span className="mb-1 rounded-sm border border-border bg-surface px-2 py-0.5 text-[10px] font-bold text-fg">
+      <button type="button" className={cn("valve-wrap", activePanel === "pcv" && "active")} style={{ left: 1000, top: 250 }} onClick={() => onEquipmentClick("pcv")}>
+        <span className={cn("mb-1 rounded-sm border px-2 py-0.5 text-[10px] font-bold transition-all", activePanel === "pcv" ? "border-accent bg-accent/20 text-accent shadow-[0_0_16px_rgba(94,200,232,0.35)]" : "border-border bg-surface text-fg")}>
           PCV-221
         </span>
         <ValveIcon alarm={state.pcv_stuck} active={state.pcv_221 > 0} />
@@ -220,8 +226,8 @@ export function ScadaScheme({
         <Bar pct={state.valve_gas} danger={state.gas_stuck} gas />
       </Eq>
 
-      <button type="button" className="valve-wrap" style={{ left: 1400, top: 750 }} onClick={() => onEquipmentClick("trc3")}>
-        <span className="mb-1 rounded-sm border border-border bg-surface px-2 py-0.5 text-[10px] font-bold text-fg">
+      <button type="button" className={cn("valve-wrap", activePanel === "trc3" && "active")} style={{ left: 1400, top: 750 }} onClick={() => onEquipmentClick("trc3")}>
+        <span className={cn("mb-1 rounded-sm border px-2 py-0.5 text-[10px] font-bold transition-all", activePanel === "trc3" ? "border-accent bg-accent/20 text-accent shadow-[0_0_16px_rgba(94,200,232,0.35)]" : "border-border bg-surface text-fg")}>
           TRC-3 газ
         </span>
         <ValveIcon alarm={state.gas_stuck} active={state.valve_gas > 0} />
@@ -271,7 +277,6 @@ function Eq({
   alarm,
   active,
   tall,
-
   children,
   onClick,
 }: {
@@ -288,7 +293,7 @@ function Eq({
   return (
     <button
       type="button"
-      className={cn("eq-node text-left", alarm && "alarm", active && "border-accent")}
+      className={cn("eq-node text-left", alarm && "alarm", active && "active")}
       style={{ left, top, height: tall ? 180 : undefined }}
       onClick={() => onClick(id)}
     >
