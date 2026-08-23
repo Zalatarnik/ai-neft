@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "КТК ЭЛОУ-АВТ-4",
+      "hasCanvas": false,
+      "bodyTextLen": 1075,
+      "bodyTextHash": "a57167fd55467c31cd45647439216524ee8067f0726dd040f6ff28263ebf251c",
+      "bodyTextPrefix": "КТК: ЭЛОУ-АВТ-4 ПОЛНОМАСШТАБНЫЙ ТРЕНАЖЁР ПАЗ Связь --:--:-- 100/",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "КТК ЭЛОУ-АВТ-4",
+      "hasCanvas": false,
+      "bodyTextLen": 749,
+      "bodyTextHash": "5826b8c2562eeb264adfba5845921b8469afa3fb1df5c12b4ba0ac5eea571509",
+      "bodyTextPrefix": "КТК: ЭЛОУ-АВТ-4 ПАЗ 100/100 МНЕМОСХЕМА АСУ ТП · КОЛЕСО — МАСШТАБ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
